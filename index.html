@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <title>ESPHome firmware flasher</title>
+    <meta name="description" content="Flash ESPHome firmware using your web browser" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <style>
+        .hidden {
+            display: none !important;
+        }
+    </style>
+    <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
+</head>
+
+<body>
+    <nav class="container-fluid">
+        <ul>
+            <li><strong>ESPHome firmware flasher</strong></li>
+        </ul>
+        <ul>
+            <li>
+                <a href="https://github.com/Nerivec/esphome-firmware-builder/releases">Firmware Releases</a>
+            </li>
+            <li>
+                <a href="https://github.com/Nerivec/esphome-firmware-builder">Github</a>
+            </li>
+            <li>
+                <a href="https://www.buymeacoffee.com/Nerivec" target="_blank" class="button is-ghost">
+                    <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee"
+                        class="image" style="max-height: 2rem;">
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <header class="container-fluid">
+        <p>Flash ESPHome firmware using your web browser.</p>
+    </header>
+
+    <main class="container-fluid">
+        <fieldset>
+            <legend>Select your device</legend>
+            <label>
+                <input type="radio" name="device" value="smlight-slzb06m" />
+                SMLight SLZB06M
+            </label>
+            <label>
+                <input type="radio" name="device" value="tubeszb-mgm24" />
+                TubesZB MGM24
+            </label>
+        </fieldset>
+        <esp-web-install-button class="hidden"></esp-web-install-button>
+    </main>
+
+    <footer class="container-fluid">
+        Installer powered by <a href="https://esphome.github.io/esp-web-tools/">ESP Web Tools</a> and <a
+            href="https://picocss.com/">Pico CSS</a>.
+    </footer>
+    <script>
+        document.querySelectorAll('input[name="device"]').forEach((radio) =>
+            radio.addEventListener("change", () => {
+                const button = document.querySelector('esp-web-install-button');
+                button.manifest = `./manifest-${radio.value}.json`;
+
+                button.classList.remove('hidden');
+            }
+            ));
+    </script>
+</body>
+
+</html>
