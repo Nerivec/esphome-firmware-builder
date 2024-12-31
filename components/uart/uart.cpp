@@ -11,7 +11,7 @@ namespace uart {
 static const char *const TAG = "uart";
 
 void UARTDevice::check_uart_settings(uint32_t baud_rate, uint8_t stop_bits, UARTParityOptions parity,
-                                     uint8_t data_bits) {
+                                     uint8_t data_bits, UARTHwFlowControl hw_flow_control) {
   if (this->parent_->get_baud_rate() != baud_rate) {
     ESP_LOGE(TAG, "  Invalid baud_rate: Integration requested baud_rate %" PRIu32 " but you have %" PRIu32 "!",
              baud_rate, this->parent_->get_baud_rate());
@@ -28,6 +28,10 @@ void UARTDevice::check_uart_settings(uint32_t baud_rate, uint8_t stop_bits, UART
     ESP_LOGE(TAG, "  Invalid parity: Integration requested parity %s but you have %s!",
              LOG_STR_ARG(parity_to_str(parity)), LOG_STR_ARG(parity_to_str(this->parent_->get_parity())));
   }
+  if (this->parent_->get_hw_flow_control() != hw_flow_control) {
+    ESP_LOGE(TAG, "  Invalid hw_flow_control: Integration requested hw_flow_control %s but you have %s!",
+             LOG_STR_ARG(hw_flow_control_to_str(hw_flow_control)), LOG_STR_ARG(hw_flow_control_to_str(this->parent_->get_hw_flow_control())));
+  }
 }
 
 const LogString *parity_to_str(UARTParityOptions parity) {
@@ -38,6 +42,17 @@ const LogString *parity_to_str(UARTParityOptions parity) {
       return LOG_STR("EVEN");
     case UART_CONFIG_PARITY_ODD:
       return LOG_STR("ODD");
+    default:
+      return LOG_STR("UNKNOWN");
+  }
+}
+
+const LogString *hw_flow_control_to_str(UARTHwFlowControl hw_flow_control) {
+  switch (hw_flow_control) {
+    case UART_CONFIG_HW_FLOW_CONTROL_DISABLE:
+      return LOG_STR("DISABLE");
+    case UART_CONFIG_HW_FLOW_CONTROL_CTS_RTS:
+      return LOG_STR("CTS_RTS");
     default:
       return LOG_STR("UNKNOWN");
   }

@@ -169,9 +169,18 @@ UART_PARITY_OPTIONS = {
     "ODD": UARTParityOptions.UART_CONFIG_PARITY_ODD,
 }
 
+UARTHwFlowControl = uart_ns.enum("UARTHwFlowControl")
+UART_HW_FLOW_CONTROL_OPTIONS = {
+    "DISABLE": UARTHwFlowControl.UART_CONFIG_HW_FLOW_CONTROL_DISABLE,
+    "CTS_RTS": UARTHwFlowControl.UART_CONFIG_HW_FLOW_CONTROL_CTS_RTS,
+}
+
+CONF_RTS_PIN = "rts_pin"
+CONF_CTS_PIN = "cts_pin"
 CONF_STOP_BITS = "stop_bits"
 CONF_DATA_BITS = "data_bits"
 CONF_PARITY = "parity"
+CONF_HW_FLOW_CONTROL = "hw_flow_control"
 
 UARTDirection = uart_ns.enum("UARTDirection")
 UART_DIRECTIONS = {
@@ -239,12 +248,17 @@ CONFIG_SCHEMA = cv.All(
             cv.Required(CONF_BAUD_RATE): cv.int_range(min=1),
             cv.Optional(CONF_TX_PIN): pins.internal_gpio_output_pin_schema,
             cv.Optional(CONF_RX_PIN): validate_rx_pin,
+            cv.Optional(CONF_RTS_PIN): pins.internal_gpio_output_pin_schema,
+            cv.Optional(CONF_CTS_PIN): pins.internal_gpio_input_pin_schema,
             cv.Optional(CONF_PORT): cv.All(validate_port, cv.only_on(PLATFORM_HOST)),
             cv.Optional(CONF_RX_BUFFER_SIZE, default=256): cv.validate_bytes,
             cv.Optional(CONF_STOP_BITS, default=1): cv.one_of(1, 2, int=True),
             cv.Optional(CONF_DATA_BITS, default=8): cv.int_range(min=5, max=8),
             cv.Optional(CONF_PARITY, default="NONE"): cv.enum(
                 UART_PARITY_OPTIONS, upper=True
+            ),
+            cv.Optional(CONF_HW_FLOW_CONTROL, default="DISABLE"): cv.enum(
+                UART_HW_FLOW_CONTROL_OPTIONS, upper=True
             ),
             cv.Optional(CONF_INVERT): cv.invalid(
                 "This option has been removed. Please instead use invert in the tx/rx pin schemas."
@@ -296,12 +310,19 @@ async def to_code(config):
     if CONF_RX_PIN in config:
         rx_pin = await cg.gpio_pin_expression(config[CONF_RX_PIN])
         cg.add(var.set_rx_pin(rx_pin))
+    if CONF_RTS_PIN in config:
+        rts_pin = await cg.gpio_pin_expression(config[CONF_RTS_PIN])
+        cg.add(var.set_rts_pin(rts_pin))
+    if CONF_CTS_PIN in config:
+        cts_pin = await cg.gpio_pin_expression(config[CONF_CTS_PIN])
+        cg.add(var.set_cts_pin(cts_pin))
     if CONF_PORT in config:
         cg.add(var.set_name(config[CONF_PORT]))
     cg.add(var.set_rx_buffer_size(config[CONF_RX_BUFFER_SIZE]))
     cg.add(var.set_stop_bits(config[CONF_STOP_BITS]))
     cg.add(var.set_data_bits(config[CONF_DATA_BITS]))
     cg.add(var.set_parity(config[CONF_PARITY]))
+    cg.add(var.set_hw_flow_control(config[CONF_HW_FLOW_CONTROL]))
 
     if CONF_DEBUG in config:
         await debug_to_code(config[CONF_DEBUG], var)
@@ -324,9 +345,12 @@ def final_validate_device_schema(
     baud_rate: Optional[int] = None,
     require_tx: bool = False,
     require_rx: bool = False,
+    require_rts: bool = False,
+    require_cts: bool = False,
     data_bits: Optional[int] = None,
     parity: Optional[str] = None,
     stop_bits: Optional[int] = None,
+    hw_flow_control: Optional[str] = None,
 ):
     def validate_baud_rate(value):
         if value != baud_rate:
@@ -368,6 +392,13 @@ def final_validate_device_schema(
             )
         return value
 
+    def validate_hw_flow_control(value):
+        if value != hw_flow_control:
+            raise cv.Invalid(
+                f"Component {name} requires hw flow control {hw_flow_control} for the uart referenced by {uart_bus}"
+            )
+        return value
+
     def validate_hub(hub_config):
         hub_schema = {}
         uart_id = hub_config[CONF_ID]
@@ -389,6 +420,20 @@ def final_validate_device_schema(
                     msg=f"Component {name} requires uart referenced by {uart_bus} to declare a rx_pin",
                 )
             ] = validate_pin(CONF_RX_PIN, device)
+        if require_rts and uart_id_type_str in NATIVE_UART_CLASSES:
+            hub_schema[
+                cv.Required(
+                    CONF_RTS_PIN,
+                    msg=f"Component {name} requires uart referenced by {uart_bus} to declare a rts_pin",
+                )
+            ] = validate_pin(CONF_RTS_PIN, device)
+        if require_cts and uart_id_type_str in NATIVE_UART_CLASSES:
+            hub_schema[
+                cv.Required(
+                    CONF_CTS_PIN,
+                    msg=f"Component {name} requires uart referenced by {uart_bus} to declare a cts_pin",
+                )
+            ] = validate_pin(CONF_CTS_PIN, device)
         if baud_rate is not None:
             hub_schema[cv.Required(CONF_BAUD_RATE)] = validate_baud_rate
         if data_bits is not None:
@@ -397,6 +442,8 @@ def final_validate_device_schema(
             hub_schema[cv.Required(CONF_PARITY)] = validate_parity
         if stop_bits is not None:
             hub_schema[cv.Required(CONF_STOP_BITS)] = validate_stop_bits
+        if hw_flow_control is not None:
+            hub_schema[cv.Required(CONF_HW_FLOW_CONTROL)] = validate_hw_flow_control
         return cv.Schema(hub_schema, extra=cv.ALLOW_EXTRA)(hub_config)
 
     return cv.Schema(

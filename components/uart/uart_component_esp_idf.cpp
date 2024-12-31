@@ -42,12 +42,22 @@ uart_config_t IDFUARTComponent::get_config_() {
       break;
   }
 
+  uart_hw_flowcontrol_t hw_flow_control;
+  switch (this->hw_flow_control_) {
+    case UART_CONFIG_HW_FLOW_CONTROL_CTS_RTS:
+      hw_flow_control = UART_HW_FLOWCTRL_CTS_RTS;
+      break;
+    default:
+      hw_flow_control = UART_HW_FLOWCTRL_DISABLE;
+      break;
+  }
+
   uart_config_t uart_config;
   uart_config.baud_rate = this->baud_rate_;
   uart_config.data_bits = data_bits;
   uart_config.parity = parity;
   uart_config.stop_bits = this->stop_bits_ == 1 ? UART_STOP_BITS_1 : UART_STOP_BITS_2;
-  uart_config.flow_ctrl = UART_HW_FLOWCTRL_DISABLE;
+  uart_config.flow_ctrl = hw_flow_control;
 #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
   uart_config.source_clk = UART_SCLK_DEFAULT;
 #else
@@ -106,12 +116,18 @@ void IDFUARTComponent::setup() {
 
   int8_t tx = this->tx_pin_ != nullptr ? this->tx_pin_->get_pin() : -1;
   int8_t rx = this->rx_pin_ != nullptr ? this->rx_pin_->get_pin() : -1;
+  int8_t rts = this->rts_pin_ != nullptr ? this->rts_pin_->get_pin() : UART_PIN_NO_CHANGE;
+  int8_t cts = this->cts_pin_ != nullptr ? this->cts_pin_->get_pin() : UART_PIN_NO_CHANGE;
 
   uint32_t invert = 0;
   if (this->tx_pin_ != nullptr && this->tx_pin_->is_inverted())
     invert |= UART_SIGNAL_TXD_INV;
   if (this->rx_pin_ != nullptr && this->rx_pin_->is_inverted())
     invert |= UART_SIGNAL_RXD_INV;
+  if (this->rts_pin_ != nullptr && this->rts_pin_->is_inverted())
+    invert |= UART_SIGNAL_RTS_INV;
+  if (this->cts_pin_ != nullptr && this->cts_pin_->is_inverted())
+    invert |= UART_SIGNAL_CTS_INV;
 
   err = uart_set_line_inverse(this->uart_num_, invert);
   if (err != ESP_OK) {
@@ -120,7 +136,7 @@ void IDFUARTComponent::setup() {
     return;
   }
 
-  err = uart_set_pin(this->uart_num_, tx, rx, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
+  err = uart_set_pin(this->uart_num_, tx, rx, rts, cts);
   if (err != ESP_OK) {
     ESP_LOGW(TAG, "uart_set_pin failed: %s", esp_err_to_name(err));
     this->mark_failed();
@@ -159,6 +175,8 @@ void IDFUARTComponent::dump_config() {
   ESP_LOGCONFIG(TAG, "UART Bus %u:", this->uart_num_);
   LOG_PIN("  TX Pin: ", tx_pin_);
   LOG_PIN("  RX Pin: ", rx_pin_);
+  LOG_PIN("  RTS Pin: ", rts_pin_);
+  LOG_PIN("  CTS Pin: ", cts_pin_);
   if (this->rx_pin_ != nullptr) {
     ESP_LOGCONFIG(TAG, "  RX Buffer Size: %u", this->rx_buffer_size_);
   }
@@ -166,6 +184,7 @@ void IDFUARTComponent::dump_config() {
   ESP_LOGCONFIG(TAG, "  Data Bits: %u", this->data_bits_);
   ESP_LOGCONFIG(TAG, "  Parity: %s", LOG_STR_ARG(parity_to_str(this->parity_)));
   ESP_LOGCONFIG(TAG, "  Stop bits: %u", this->stop_bits_);
+  ESP_LOGCONFIG(TAG, "  Hw Flow Control: %s", LOG_STR_ARG(hw_flow_control_to_str(this->hw_flow_control_)));
   this->check_logger_conflict();
 }
 

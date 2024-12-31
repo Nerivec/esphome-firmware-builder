@@ -19,6 +19,11 @@ enum UARTParityOptions {
   UART_CONFIG_PARITY_ODD,
 };
 
+enum UARTHwFlowControl {
+  UART_CONFIG_HW_FLOW_CONTROL_DISABLE,
+  UART_CONFIG_HW_FLOW_CONTROL_CTS_RTS,
+};
+
 #ifdef USE_UART_DEBUGGER
 enum UARTDirection {
   UART_DIRECTION_RX,
@@ -28,6 +33,8 @@ enum UARTDirection {
 #endif
 
 const LogString *parity_to_str(UARTParityOptions parity);
+
+const LogString *hw_flow_control_to_str(UARTHwFlowControl hw_flow_control);
 
 class UARTComponent {
  public:
@@ -82,6 +89,14 @@ class UARTComponent {
   // @param rx_pin Pointer to the internal GPIO pin used for reception.
   void set_rx_pin(InternalGPIOPin *rx_pin) { this->rx_pin_ = rx_pin; }
 
+  // Sets the RTS (flow control) pin for the UART bus.
+  // @param rts_pin Pointer to the internal GPIO pin used for reception.
+  void set_rts_pin(InternalGPIOPin *rts_pin) { this->rts_pin_ = rts_pin; }
+
+  // Sets the CTS (flow control) pin for the UART bus.
+  // @param cts_pin Pointer to the internal GPIO pin used for reception.
+  void set_cts_pin(InternalGPIOPin *cts_pin) { this->cts_pin_ = cts_pin; }
+
   // Sets the size of the RX buffer.
   // @param rx_buffer_size Size of the RX buffer in bytes.
   void set_rx_buffer_size(size_t rx_buffer_size) { this->rx_buffer_size_ = rx_buffer_size; }
@@ -113,6 +128,14 @@ class UARTComponent {
   // Get the parity used in UART communication.
   // @return Parity option.
   UARTParityOptions get_parity() const { return this->parity_; }
+
+  // Set the flow control used in UART communication.
+  // @param hw_flow_control Flow control option.
+  void set_hw_flow_control(UARTHwFlowControl hw_flow_control) { this->hw_flow_control_ = hw_flow_control; }
+
+  // Get the flow control used in UART communication.
+  // @return Flow control option.
+  UARTHwFlowControl get_hw_flow_control() const { return this->hw_flow_control_; }
 
   // Set the baud rate for UART communication.
   // @param baud_rate Baud rate in bits per second.
@@ -161,11 +184,14 @@ class UARTComponent {
 
   InternalGPIOPin *tx_pin_;
   InternalGPIOPin *rx_pin_;
+  InternalGPIOPin *rts_pin_;
+  InternalGPIOPin *cts_pin_;
   size_t rx_buffer_size_;
   uint32_t baud_rate_;
   uint8_t stop_bits_;
   uint8_t data_bits_;
   UARTParityOptions parity_;
+  UARTHwFlowControl hw_flow_control_;
 #ifdef USE_UART_DEBUGGER
   CallbackManager<void(UARTDirection, uint8_t)> debug_callback_{};
 #endif
