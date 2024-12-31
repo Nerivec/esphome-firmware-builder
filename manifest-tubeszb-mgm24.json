@@ -1,15 +1,15 @@
 {
-    "name": "smlight-slzb06m",
+    "name": "tubeszb-mgm24",
     "version": "v0.0.1",
     "builds": [
         {
             "chipFamily": "ESP32",
             "ota": {
-                "path": "https://github.com/Nerivec/esphome-firmware-builder/releases/download/v0.0.1/smlight-slzb06m.ota.bin"
+                "path": "https://github.com/Nerivec/esphome-firmware-builder/releases/download/v0.0.1/tubeszb-mgm24.ota.bin"
             },
             "parts": [
                 {
-                    "path": "https://github.com/Nerivec/esphome-firmware-builder/releases/download/v0.0.1/smlight-slzb06m.factory.bin",
+                    "path": "https://github.com/Nerivec/esphome-firmware-builder/releases/download/v0.0.1/tubeszb-mgm24.factory.bin",
                     "offset": 0
                 }
             ]
