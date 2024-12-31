@@ -36,7 +36,7 @@ mdns:
       txt:
         version: 1.0
         name: smlight-slzb06m
-        radio_type: znp
+        radio_type: ezsp
 
 ethernet:
   type: LAN8720
@@ -82,11 +82,6 @@ binary_sensor:
           else:
             - switch.turn_on: device_mode_led
             - switch.turn_on: device_mode_switch
-
-sensor:
-  - platform: stream_server
-    connection_count:
-      name: "Connection Count"
 
 switch:
   - platform: gpio

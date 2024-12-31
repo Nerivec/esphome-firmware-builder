@@ -66,11 +66,6 @@ binary_sensor:
     connected:
       name: "Serial Connected"
 
-sensor:
-  - platform: stream_server
-    connection_count:
-      name: "Connection Count"
-
 switch:
   - platform: gpio
     pin: 5
