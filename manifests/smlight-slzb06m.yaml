@@ -1,0 +1,141 @@
+esphome:
+  name: smlight-slzb06m
+  name_add_mac_suffix: true
+
+esp32:
+  board: esp32dev
+  flash_size: 16MB
+  framework:
+    type: esp-idf
+
+external_components:
+  - source: github://oxan/esphome-stream-server
+  - source: ../components
+    components: [uart]
+
+# Enable logging
+logger:
+  level: DEBUG
+
+# Enable Home Assistant API
+api:
+  reboot_timeout: 0s
+
+ota:
+  platform: esphome
+
+web_server:
+  port: 80
+  local: true
+
+mdns:
+  services:
+    - service: "_zigbee"
+      protocol: "_tcp"
+      port: 6638
+      txt:
+        version: 1.0
+        name: smlight-slzb06m
+        radio_type: znp
+
+ethernet:
+  type: LAN8720
+  mdc_pin: GPIO23
+  mdio_pin: GPIO18
+  clk_mode: GPIO0_IN
+  phy_addr: 1
+  power_pin: GPIO16
+
+uart:
+  id: uart_bus
+  rx_pin: GPIO5
+  tx_pin: GPIO17
+  hw_flow_control: DISABLE
+  baud_rate: 115200
+  rx_buffer_size: 256
+
+stream_server:
+  uart_id: uart_bus
+  port: 6638
+  buffer_size: 256
+
+binary_sensor:
+  - platform: stream_server
+    connected:
+      name: "Serial Connected"
+
+  - platform: gpio
+    name: "Device Mode Button"
+    id: device_mode_button
+    pin:
+      number: GPIO35
+      mode:
+        input: true
+      inverted: yes
+    on_press:
+      - if:
+          condition:
+            switch.is_on: device_mode_switch
+          then:
+            - switch.turn_off: device_mode_led
+            - switch.turn_off: device_mode_switch
+          else:
+            - switch.turn_on: device_mode_led
+            - switch.turn_on: device_mode_switch
+
+sensor:
+  - platform: stream_server
+    connection_count:
+      name: "Connection Count"
+
+switch:
+  - platform: gpio
+    pin: 33
+    name: "RST Pin"
+    id: rst_pin
+    inverted: yes
+    restore_mode: ALWAYS_OFF
+
+  - platform: gpio
+    pin: 32
+    name: "Bootloader Pin"
+    id: bootloader_pin
+    inverted: yes
+    restore_mode: ALWAYS_OFF
+    disabled_by_default: true
+
+  - platform: gpio
+    pin:
+      number: GPIO4
+    name: "Device Mode Switch"
+    id: device_mode_switch
+    restore_mode: ALWAYS_OFF
+    internal: true
+
+  - platform: gpio
+    pin:
+      number: GPIO12
+    name: "LED - device mode (Blue)"
+    id: device_mode_led
+    restore_mode: ALWAYS_OFF
+
+  - platform: gpio
+    pin:
+      number: GPIO14
+    name: "LED - power (Yellow)"
+    id: power_led
+    restore_mode: ALWAYS_ON
+
+button:
+  - platform: restart
+    name: "Restart"
+    disabled_by_default: true
+
+  - platform: template
+    name: "Reset ZigBee Stack"
+    id: reset_zigbee_stack
+    disabled_by_default: true
+    on_press:
+      - switch.turn_on: rst_pin
+      - delay: 15ms
+      - switch.turn_off: rst_pin
