@@ -5,11 +5,11 @@
         {
             "chipFamily": "ESP32",
             "ota": {
-                "path": "https://github.com/Nerivec/esphome-firmware-builder/releases/download/v0.0.1/smlight-slzb06m.ota.bin"
+                "path": "https://nerivec.github.io/esphome-firmware-builder/latest-release/smlight-slzb06m.ota.bin"
             },
             "parts": [
                 {
-                    "path": "https://github.com/Nerivec/esphome-firmware-builder/releases/download/v0.0.1/smlight-slzb06m.factory.bin",
+                    "path": "https://nerivec.github.io/esphome-firmware-builder/latest-release/smlight-slzb06m.factory.bin",
                     "offset": 0
                 }
             ]

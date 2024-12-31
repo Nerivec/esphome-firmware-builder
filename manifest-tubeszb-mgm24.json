@@ -5,11 +5,11 @@
         {
             "chipFamily": "ESP32",
             "ota": {
-                "path": "https://github.com/Nerivec/esphome-firmware-builder/releases/download/v0.0.1/tubeszb-mgm24.ota.bin"
+                "path": "https://nerivec.github.io/esphome-firmware-builder/latest-release/tubeszb-mgm24.ota.bin"
             },
             "parts": [
                 {
-                    "path": "https://github.com/Nerivec/esphome-firmware-builder/releases/download/v0.0.1/tubeszb-mgm24.factory.bin",
+                    "path": "https://nerivec.github.io/esphome-firmware-builder/latest-release/tubeszb-mgm24.factory.bin",
                     "offset": 0
                 }
             ]
