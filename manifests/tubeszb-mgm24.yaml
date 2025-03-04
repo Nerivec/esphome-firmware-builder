@@ -1,6 +1,11 @@
 esphome:
   name: tubeszb-mgm24
   name_add_mac_suffix: true
+  on_boot:
+    priority: 600
+    then:
+      - lambda: |-
+          id(mdns0).add_extra_service({ "_zigbee-coordinator", "_tcp", 6638, {{ "radio_type", "ezsp"}, {"name", "tubeszb-mgm24"}, {"serial_number", get_mac_address() }} });
 
 esp32:
   board: esp-wrover-kit
@@ -28,14 +33,7 @@ web_server:
   local: true
 
 mdns:
-  services:
-    - service: "_zigbee"
-      protocol: "_tcp"
-      port: 6638
-      txt:
-        version: 1.0
-        name: tubeszb-mgm24
-        radio_type: ezsp
+  id: mdns0
 
 # Olimex ESP32-PoE Ethernet
 ethernet:
