@@ -1,0 +1,96 @@
+defaults:
+  app_bootloader_reset_delay: 5s
+
+esphome:
+  min_version: 2025.12.0
+  name_add_mac_suffix: true
+  project:
+    name: nerivec.esphome-firmware-builder
+    version: "2026.01.25"
+
+external_components:
+  # TODO: https://github.com/tube0013/esphome-stream-server-v2/commit/d55048e1d40a1c0af18a36cc6de6c6cb8a59343e
+  - source: github://oxan/esphome-stream-server
+
+# Enable logging
+logger:
+  level: DEBUG
+
+# Enable Home Assistant API
+api:
+  reboot_timeout: 0s
+
+ota:
+  - platform: esphome
+  - platform: web_server
+
+web_server:
+  port: 80
+  version: 2
+  log: false
+
+stream_server:
+  id: stream_srv
+  uart_id: uart_bus
+  port: 6638
+  buffer_size: 8192
+
+uart:
+  rx_buffer_size: 8192
+
+binary_sensor:
+  - platform: stream_server
+    connected:
+      name: Serial Connected
+
+text_sensor:
+  - platform: ethernet_info
+    ip_address:
+      name: IP Address
+    mac_address:
+      name: MAC Address
+
+switch:
+  - platform: gpio
+    pin: ${ app_reset_pin }
+    name: App Reset Pin
+    id: app_reset_pin
+    inverted: yes
+    restore_mode: ALWAYS_OFF
+    disabled_by_default: true
+
+  - platform: gpio
+    pin: ${ app_bootloader_pin }
+    name: App Bootloader Pin
+    id: app_bootloader_pin
+    inverted: yes
+    restore_mode: ALWAYS_OFF
+    disabled_by_default: true
+
+button:
+  - platform: restart
+    name: "Restart ESP"
+
+  - platform: template
+    name: "Reset App"
+    id: reset_app
+    on_press:
+      - switch.turn_on: app_reset_pin
+      - delay: 15ms
+      - switch.turn_off: app_reset_pin
+
+  - platform: template
+    name: Enter App Bootloader
+    on_press:
+      - script.execute: enter_app_bootloader
+
+script:
+  - id: enter_app_bootloader
+    then:
+      - switch.turn_on: app_bootloader_pin
+      - delay: 1s
+      - switch.turn_on: app_reset_pin
+      - delay: 1s
+      - switch.turn_off: app_reset_pin
+      - delay: ${ app_bootloader_reset_delay }
+      - switch.turn_off: app_bootloader_pin

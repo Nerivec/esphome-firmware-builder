@@ -1,0 +1,18 @@
+{
+    "name": "{{ name }}",
+    "version": "{{ version }}",
+    "builds": [
+        {
+            "chipFamily": "{{ chip_family }}",
+            "ota": {
+                "path": "https://nerivec.github.io/esphome-firmware-builder/latest-release/{{ file_name }}.ota.bin"
+            },
+            "parts": [
+                {
+                    "path": "https://nerivec.github.io/esphome-firmware-builder/latest-release/{{ file_name }}.factory.bin",
+                    "offset": 0
+                }
+            ]
+        }
+    ]
+}

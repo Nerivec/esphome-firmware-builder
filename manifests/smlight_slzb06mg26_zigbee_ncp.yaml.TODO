@@ -1,0 +1,50 @@
+substitutions:
+  name: smlight-slzb06mg26
+
+packages:
+  base: !include
+    file: ../common/base.yaml
+    vars:
+      app_reset_pin: XX
+      app_bootloader_pin: XX
+
+  esp32_idf: !include
+    file: ../common/esp32_idf.yaml
+    vars: {}
+
+  zigbee_ncp: !include
+    file: ../common/zigbee_ncp.yaml
+    vars:
+      name: ${ name }
+      type: ezsp
+
+  smlight: !include
+    file: ../common/smlight.yaml
+    vars:
+      power_pin: GPIOXX
+      button_pin: GPIOXX
+      switch_pin: GPIOXX
+      mode_pin: GPIOXX
+
+esphome:
+  name: ${ name }
+
+esp32:
+  # ESP32-D0WD Espressif
+  variant: esp32
+  flash_size: 16MB
+
+ethernet:
+  type: W5500
+  clk_pin: GPIOXX
+  mosi_pin: GPIOXX
+  miso_pin: GPIOXX
+  cs_pin: GPIOXX
+  interrupt_pin: GPIOXX
+  reset_pin: GPIOXX
+
+uart:
+  id: uart_bus
+  rx_pin: GPIOXX
+  tx_pin: GPIOXX
+  baud_rate: 115200

@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       manifest_glob:
-        description: 'Manifest glob'
+        description: "Manifest glob"
         required: false
   release:
     types:
@@ -17,7 +17,7 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - id: set-matrix
         run: |
           echo "matrix=$(find manifests -type f -name "${{ inputs.manifest_glob || '*' }}.yaml" -print | sort | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
@@ -32,29 +32,54 @@ jobs:
       # fail-fast: false
       matrix:
         manifest: ${{ fromJson(needs.list-manifests.outputs.matrix) }}
-
+        baudrate: [115200, 460800, 921600]
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Compile ESPHome Firmware
         id: compile-firmware
         run: |
+          if ! command -v yq >/dev/null 2>&1
+          then
+            curl -L -f -s -o /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.50.1/yq_linux_amd64
+            chmod +x /usr/local/bin/yq
+          fi
+
+          yq -r -i '.uart.baud_rate = ${{ matrix.baudrate }}' ${{ matrix.manifest }}
+
+          # check & output the final config
+          esphome config ${{ matrix.manifest }} > manifest_final.yaml
+
           esphome compile ${{ matrix.manifest }}
 
+          host_name=$(yq -r '.substitutions.name' ${{ matrix.manifest }})
           device_name=$(basename ${{ matrix.manifest }} .yaml)
+          baudrate_append="_${{ matrix.baudrate }}"
+          file_name="$device_name$baudrate_append"
 
-          mv "manifests/.esphome/build/$device_name/.pioenvs/$device_name/firmware.factory.bin" "$device_name.factory.bin"
-          mv "manifests/.esphome/build/$device_name/.pioenvs/$device_name/firmware.ota.bin" "$device_name.ota.bin"
+          mv "manifests/.esphome/build/$host_name/.pioenvs/$host_name/firmware.factory.bin" "$file_name.factory.bin"
+          mv "manifests/.esphome/build/$host_name/.pioenvs/$host_name/firmware.ota.bin" "$file_name.ota.bin"
 
-          echo "device_name=$device_name" >> $GITHUB_OUTPUT
+          # generate manifest for webflasher
+          cp templates/webflasher-manifest.json "$file_name.json"
 
-      - uses: actions/upload-artifact@v4
+          sed -i -e "s+{{ name }}+$(yq -r '.esphome.name' manifest_final.yaml)+g" "$file_name.json"
+          sed -i -e "s+{{ version }}+$(yq -r '.esphome.project.version' manifest_final.yaml)+g" "$file_name.json"
+          sed -i -e "s+{{ chip_family }}+$(yq -r '.esp32.variant' manifest_final.yaml | tr '[:lower:]' '[:upper:]')+g" "$file_name.json"
+          sed -i -e "s+{{ file_name }}+$file_name+g" "$file_name.json"
+
+          echo "file_name=$file_name" >> $GITHUB_OUTPUT
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v6
         with:
-          name: firmware-build-${{ steps.compile-firmware.outputs.device_name }}
+          name: firmware-build-${{ steps.compile-firmware.outputs.file_name }}
           path: |
-            ${{ steps.compile-firmware.outputs.device_name }}.factory.bin
-            ${{ steps.compile-firmware.outputs.device_name }}.ota.bin
+            manifest_final.yaml
+            ${{ steps.compile-firmware.outputs.file_name }}.factory.bin
+            ${{ steps.compile-firmware.outputs.file_name }}.ota.bin
+            ${{ steps.compile-firmware.outputs.file_name }}.json
           if-no-files-found: error
 
   release-assets:
@@ -65,14 +90,35 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Download all workflow artifacts
-        uses: actions/download-artifact@v4
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          ref: gh-pages
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v7
         with:
           path: artifacts
           merge-multiple: true
           pattern: firmware-build-*
 
-      - name: Upload artifacts
+      - name: Upload build artifacts
         uses: softprops/action-gh-release@v2
         with:
           files: artifacts/*.bin
+
+      - name: Update web-flasher GitHub pages
+        run: |
+          rm ./latest-release/*
+          rm ./*.json
+          cp artifacts/*.bin ./latest-release/
+          cp artifacts/*.json ./
+
+      - name: Commit changes to GitHub pages
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add ./latest-release/
+          git add ./*.json
+          git commit -m "New release" || echo 'Nothing to commit'
+          git push

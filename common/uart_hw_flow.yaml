@@ -1,0 +1,21 @@
+# TODO: Error while reading config: Error while parsing config: TypeError Error evaluating jinja expression
+#       no loader for this environment specified
+esphome:
+  on_boot:
+    - priority: 900
+      then:
+        - lambda: |-
+            // forces RTS low (asserted) early, UART will take the pin later
+            gpio_reset_pin(${ rts_pin });
+            gpio_set_direction(${ rts_pin }, GPIO_MODE_OUTPUT);
+            gpio_set_level(${ rts_pin }, 0);
+
+            #include "driver/uart.h"
+
+            ESP_LOGD("uart_hw_flow", "Setting hw flow control for UART...");
+
+            // re-configures the pins with CTS/RTS
+            uart_set_pin(${ num }, ${ tx_pin }, ${ rx_pin }, ${ rts_pin }, ${ cts_pin });
+
+            // enables the CTS/RTS flow control mode
+            uart_set_hw_flow_ctrl(${ num }, UART_HW_FLOWCTRL_CTS_RTS, UART_HW_FIFO_LEN(${ num }));

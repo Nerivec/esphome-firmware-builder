@@ -1,0 +1,45 @@
+substitutions:
+  name: smlight-slzb06m
+
+packages:
+  base: !include
+    file: ../common/base.yaml
+    vars:
+      app_reset_pin: 33
+      app_bootloader_pin: 32
+
+  esp32_idf: !include
+    file: ../common/esp32_idf.yaml
+    vars: {}
+
+  smlight: !include
+    file: ../common/smlight.yaml
+    vars:
+      power_pin: GPIO14
+      button_pin: GPIO35
+      switch_pin: GPIO4
+      mode_pin: GPIO12
+
+esphome:
+  name: ${ name }
+
+esp32:
+  # ESP32-D0WD Espressif
+  variant: esp32
+  flash_size: 16MB
+
+ethernet:
+  type: LAN8720
+  mdc_pin: GPIO23
+  mdio_pin: GPIO18
+  clk:
+    pin: GPIO0
+    mode: CLK_EXT_IN
+  phy_addr: 1
+  power_pin: GPIO16
+
+uart:
+  id: uart_bus
+  rx_pin: GPIO5
+  tx_pin: GPIO17
+  baud_rate: 115200

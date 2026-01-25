@@ -1,0 +1,53 @@
+substitutions:
+  name: tubeszb-mgm24
+
+packages:
+  base: !include
+    file: ../common/base.yaml
+    vars:
+      app_reset_pin: 5
+      app_bootloader_pin: 16
+
+  esp32_idf: !include
+    file: ../common/esp32_idf.yaml
+    vars: {}
+
+esphome:
+  name: ${ name }
+  on_boot:
+    - priority: 900
+      then:
+        - lambda: |-
+            // forces RTS low (asserted) early, UART will take the pin later
+            gpio_reset_pin(GPIO_NUM_2);
+            gpio_set_direction(GPIO_NUM_2, GPIO_MODE_OUTPUT);
+            gpio_set_level(GPIO_NUM_2, 0);
+
+            #include "driver/uart.h"
+
+            ESP_LOGD("uart_hw_flow", "Setting hw flow control for UART...");
+
+            // re-configures the pins with CTS/RTS
+            uart_set_pin(UART_NUM_1, GPIO_NUM_4, GPIO_NUM_36, GPIO_NUM_2, GPIO_NUM_13);
+
+            // enables the CTS/RTS flow control mode
+            uart_set_hw_flow_ctrl(UART_NUM_1, UART_HW_FLOWCTRL_CTS_RTS, UART_HW_FIFO_LEN(UART_NUM_1));
+
+esp32:
+  variant: esp32
+
+ethernet:
+  type: LAN8720
+  mdc_pin: GPIO23
+  mdio_pin: GPIO18
+  clk:
+    pin: GPIO17
+    mode: CLK_OUT
+  phy_addr: 0
+  power_pin: GPIO12
+
+uart:
+  id: uart_bus
+  tx_pin: GPIO4
+  rx_pin: GPIO36
+  baud_rate: 115200

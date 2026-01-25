@@ -1,0 +1,43 @@
+substitutions:
+  name: sonoff-dongle-m
+
+packages:
+  base: !include
+    file: ../common/base.yaml
+    vars:
+      app_reset_pin: XX
+      app_bootloader_pin: XX
+
+  esp32_idf: !include
+    file: ../common/esp32_idf.yaml
+    vars: {}
+
+  zigbee_ncp: !include
+    file: ../common/zigbee_ncp.yaml
+    vars:
+      name: ${ name }
+      type: ezsp
+
+esphome:
+  name: ${ name }
+
+esp32:
+  # ESP32-D0WDR2-V3 Espressif
+  variant: esp32
+  flash_size: 16MB
+
+ethernet:
+  type: TODO
+  mdc_pin: GPIOXX
+  mdio_pin: GPIOXX
+  clk:
+    pin: GPIOXX
+    mode: CLK_XX
+  phy_addr: X
+  power_pin: GPIOXX
+
+uart:
+  id: uart_bus
+  tx_pin: GPIOXX
+  rx_pin: GPIOXX
+  baud_rate: 115200

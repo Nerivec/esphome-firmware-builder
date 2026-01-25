@@ -1,0 +1,42 @@
+binary_sensor:
+  - platform: gpio
+    id: device_mode_button
+    name: "Device Mode Button"
+    pin:
+      number: ${ button_pin }
+      mode:
+        input: true
+      inverted: yes
+    on_press:
+      - if:
+          condition:
+            switch.is_on: device_mode_switch
+          then:
+            - switch.turn_off: device_mode_led
+            - switch.turn_off: device_mode_switch
+          else:
+            - switch.turn_on: device_mode_led
+            - switch.turn_on: device_mode_switch
+
+switch:
+  - platform: gpio
+    id: device_mode_switch
+    name: "Device Mode Switch"
+    pin:
+      number: ${ switch_pin }
+    restore_mode: ALWAYS_OFF
+    internal: true
+
+  - platform: gpio
+    name: "Device Mode"
+    id: device_mode_led
+    pin:
+      number: ${ mode_pin }
+    restore_mode: ALWAYS_OFF
+
+  - platform: gpio
+    name: "Power"
+    id: power_led
+    pin:
+      number: ${ power_pin }
+    restore_mode: ALWAYS_ON
