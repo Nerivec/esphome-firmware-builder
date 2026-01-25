@@ -41,15 +41,42 @@
 
     <main class="container-fluid">
         <fieldset>
+            <legend>Select your firmware type</legend>
+            <label>
+                <select name="fw_type">
+                    <option value="zigbee_ncp" selected>zigbee_ncp</option>
+                    <option value="openthread">openthread</option>
+                </select>
+            </label>
+        </fieldset>
+        <fieldset>
+            <legend>Select your baudrate</legend>
+            <label>
+                <select name="baudrate">
+                    <option value="115200">115200</option>
+                    <option value="460800" selected>460800</option>
+                    <option value="921600">921600</option>
+                </select>
+            </label>
+        </fieldset>
+        <fieldset>
             <legend>Select your device</legend>
             <label>
-                <input type="radio" name="device" value="smlight-slzb06m" />
-                SMLight SLZB06M
+                <input type="radio" name="device" value="smlight_slzb06" />
+                SMLight SLZB06 or SLZB06P7 or SLZB06P10
             </label>
             <label>
-                <input type="radio" name="device" value="tubeszb-mgm24" />
+                <input type="radio" name="device" value="smlight_slzb06m" />
+                SMLight SLZB06M or SLZB06MG24
+            </label>
+            <label>
+                <input type="radio" name="device" value="tubeszb_mgm24" />
                 TubesZB MGM24
             </label>
+        </fieldset>
+        <fieldset aria-readonly="true">
+            <legend>Selected firmware</legend>
+            <input name="manifest" type="text" readonly />
         </fieldset>
         <esp-web-install-button class="hidden"></esp-web-install-button>
     </main>
@@ -59,14 +86,42 @@
             href="https://picocss.com/">Pico CSS</a>.
     </footer>
     <script>
-        document.querySelectorAll('input[name="device"]').forEach((radio) =>
-            radio.addEventListener("change", () => {
-                const button = document.querySelector('esp-web-install-button');
-                button.manifest = `./manifest-${radio.value}.json`;
+        const espButton = document.querySelector('esp-web-install-button');
+        const fwType = document.querySelector('select[name="fw_type"]');
+        const baudrate = document.querySelector('select[name="baudrate"]');
+        const devices = document.querySelectorAll('input[name="device"]');
+        const manifestP = document.querySelector('input[name="manifest"]');
+        let fwTypeValue = fwType.value;
+        let baudrateValue = baudrate.value;
+        let deviceValue = undefined;
 
-                button.classList.remove('hidden');
+        const onChange = () => {
+            if (fwTypeValue && baudrateValue && deviceValue) {
+                const manifest = `./${deviceValue}_${fwTypeValue}_${baudrateValue}.json`;
+
+                manifestP.value = manifest;
+                espButton.manifest = manifest;
+                espButton.classList.remove('hidden');
+            } else {
+                espButton.classList.add('hidden');
             }
-            ));
+        };
+
+        fwType.addEventListener("change", (e) => {
+            fwTypeValue = e.target.value;
+
+            onChange();
+        });
+        baudrate.addEventListener("change", (e) => {
+            baudrateValue = e.target.value;
+
+            onChange();
+        });
+        devices.forEach((device) => device.addEventListener("change", (e) => {
+            deviceValue = e.target.value;
+
+            onChange();
+        }));
     </script>
 </body>
 
