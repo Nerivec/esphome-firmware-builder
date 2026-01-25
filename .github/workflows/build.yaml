@@ -107,18 +107,16 @@ jobs:
         with:
           files: artifacts/*.bin
 
-      - name: Update web-flasher GitHub pages
-        run: |
-          rm ./latest-release/*
-          rm ./*.json
-          cp artifacts/*.bin ./latest-release/
-          cp artifacts/*.json ./
-
-      - name: Commit changes to GitHub pages
+      - name: Update GitHub pages
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+          git rm ./latest-release/*
+          git rm ./*.json
+          cp artifacts/*.bin ./latest-release/
+          cp artifacts/*.json ./
           git add ./latest-release/
           git add ./*.json
-          git commit -m "New release" || echo 'Nothing to commit'
+          git commit -m "feat: new release" || echo 'Nothing to commit'
           git push
