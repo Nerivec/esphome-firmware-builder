@@ -1,0 +1,18 @@
+{
+    "name": "smlight-slzb06",
+    "version": "2026.01.25",
+    "builds": [
+        {
+            "chipFamily": "ESP32",
+            "ota": {
+                "path": "https://nerivec.github.io/esphome-firmware-builder/latest-release/smlight_slzb06_zigbee_ncp_460800.ota.bin"
+            },
+            "parts": [
+                {
+                    "path": "https://nerivec.github.io/esphome-firmware-builder/latest-release/smlight_slzb06_zigbee_ncp_460800.factory.bin",
+                    "offset": 0
+                }
+            ]
+        }
+    ]
+}
