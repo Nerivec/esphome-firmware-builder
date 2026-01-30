@@ -74,10 +74,10 @@
                 TubesZB MGM24
             </label>
         </fieldset>
-        <fieldset aria-readonly="true">
-            <legend>Selected firmware</legend>
-            <input name="manifest" type="text" readonly />
-        </fieldset>
+        <hr />
+        <p>
+            Selected firmware: <a id="manifest" href="#" target="_blank"></a>
+        </p>
         <esp-web-install-button class="hidden"></esp-web-install-button>
     </main>
 
@@ -90,7 +90,7 @@
         const fwType = document.querySelector('select[name="fw_type"]');
         const baudrate = document.querySelector('select[name="baudrate"]');
         const devices = document.querySelectorAll('input[name="device"]');
-        const manifestP = document.querySelector('input[name="manifest"]');
+        const manifestLink = document.querySelector('#manifest');
         let fwTypeValue = fwType.value;
         let baudrateValue = baudrate.value;
         let deviceValue = undefined;
@@ -99,10 +99,15 @@
             if (fwTypeValue && baudrateValue && deviceValue) {
                 const manifest = `./${deviceValue}_${fwTypeValue}_${baudrateValue}.json`;
 
-                manifestP.value = manifest;
+                manifestLink.href = manifest;
+                manifestLink.textContent = manifest;
                 espButton.manifest = manifest;
+
                 espButton.classList.remove('hidden');
             } else {
+                manifestLink.href = "#";
+                manifestLink.textContent = "";
+
                 espButton.classList.add('hidden');
             }
         };
