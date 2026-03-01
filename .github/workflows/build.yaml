@@ -72,7 +72,7 @@ jobs:
           echo "file_name=$file_name" >> $GITHUB_OUTPUT
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: firmware-build-${{ steps.compile-firmware.outputs.file_name }}
           path: |
